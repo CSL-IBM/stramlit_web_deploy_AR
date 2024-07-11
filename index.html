@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+? ? <title>Text-To-Watsonx : Engage AR</title>
+? ? <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+? ? <div class="spinner" id="loadingSpinner"></div>
+? ? <h1>Text-To-Watsonx : Engage AR</h1>
+
+? ? <!-- Introduction Section -->
+? ? <div class="introduction">
+? ? ? ? <p>Welcome to the Text-To-Watsonx : Engage AR. <br>Here, you can inquire about various aspects of Engage AR transactions. <br>Use the example queries as a guide to format your questions.</p>
+? ? ? ? <p><strong><span style="color: red;">Important: AI responses can vary, you might need to fine-tune your prompt template or LLM for improved results.</span></strong></p>
+? ? </div>
+
+? ? <!-- Example Questions Section -->
+? ? <div class="examples">
+? ? ? ? <p><strong>Example Inquiries:</strong></p>
+? ? ? ? <ul>
+? ? ? ? ? ? <li>What are the items with a due date after today?</li> ? ?
+? ? ? ? ? ? <li>Show me the list where the collector is Lisa and the category is Yellow.</li> ? ?
+? ? ? ? ? ? <li>Show me the list where the collector is David and the forecast code is AUTO.</li> ? ?
+? ? ? ? ? ? <li>Show me the list where the collector is John and the forecast date is after August.</li> ? ?
+? ? ? ? </ul>
+? ? </div>
+
+? ? <div class="form-container">
+? ? ? ? <form method="POST" action="/inquiry">
+? ? ? ? ? ? <label for="inquiry"><strong>Submit an Inquiry:</strong></label>
+? ? ? ? ? ? <input type="text" id="inquiry" name="inquiry" placeholder="Make an inquiry..." required>
+? ? ? ? ? ? <input type="submit" value="Submit" class="submit-button">
+? ? ? ? </form>
+? ? ? ? <!-- Response display -->
+? ? </div>
+? ? {% if answer %}
+? ? <div class="response">
+? ? ? ? <p><strong>Response:</strong> {{ answer|safe }}</p>
+? ? </div>
+? ? {% endif %}
+? ? <table>
+? ? ? ? <tr>
+? ? ? ? ? ? <th>Category</th>
+? ? ? ? ? ? <th>CustomerName</th>
+? ? ? ? ? ? <th>CustomerNumber</th>
+? ? ? ? ? ? <th>InvoiceNumber</th>
+? ? ? ? ? ? <th>InvoiceAmount</th>
+? ? ? ? ? ? <th>InvoiceDate</th>
+? ? ? ? ? ? <th>DueDate</th>
+? ? ? ? ? ? <th>ForecastCode</th>
+? ? ? ? ? ? <th>ForecastDate</th>
+? ? ? ? ? ? <th>Collector</th>
+
+? ? ? ? </tr>
+? ? ? ? {% for transaction in transactions %}
+? ? ? ? <tr>
+? ? ? ? ? ? <td>{{ transaction.Category }}</td>
+? ? ? ? ? ? <td>{{ transaction.CustomerName }}</td>
+? ? ? ? ? ? <td>{{ transaction.CustomerNumber }}</td>
+? ? ? ? ? ? <td>{{ transaction.InvoiceNumber }}</td>
+? ? ? ? ? ? <td>{{ transaction.InvoiceAmount }}</td>
+? ? ? ? ? ? <td>{{ transaction.InvoiceDate }}</td>
+? ? ? ? ? ? <td>{{ transaction.DueDate }}</td>
+? ? ? ? ? ? <td>{{ transaction.ForecastCode }}</td>
+? ? ? ? ? ? <td>{{ transaction.ForecastDate }}</td>
+? ? ? ? ? ? <td>{{ transaction.Collector }}</td>
+
+? ? ? ? </tr>
+? ? ? ? {% endfor %}
+? ? </table>
+? ? <script>
+? ? ? ? document.addEventListener('DOMContentLoaded', function() {
+? ? ? ? ? ? var form = document.querySelector('form');
+? ? ? ? ? ? var spinner = document.getElementById('loadingSpinner');
+? ? 
+? ? ? ? ? ? form.onsubmit = function() {
+? ? ? ? ? ? ? ? spinner.style.display = 'block';
+? ? ? ? ? ? };
+? ? ? ? });
+? ? </script>
+</body>
+</html>
