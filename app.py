@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime
 import pytz
 from langchain_experimental.sql import SQLDatabaseChain
-from .model import llm
+from model import llm
 
 # Function to get database connection
 def get_db_connection():
