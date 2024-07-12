@@ -80,7 +80,7 @@ def init_db():
 # Initialize database
 init_db()
 
-# Initialize LLM and embeddings
+# Initialize LLM and SQLDatabaseChain instance correctly
 def init_llm():
     params = {
         GenParams.MAX_NEW_TOKENS: 1000,
@@ -106,9 +106,9 @@ def init_llm():
     llm_hub = WatsonxLLM(model=model)
     return llm_hub
 
-# Correctly initialize SQLDatabaseChain instance
+# Initialize LLM and embeddings
 llm_hub = init_llm()
-db_chain = SQLDatabaseChain(llm_hub=llm_hub.llm, db=db, verbose=True)  # Check llm_hub initialization
+db_chain = SQLDatabaseChain(llm_hub=llm_hub.llm, db=db, verbose=True)  # 이 부분은 수정하지 않았습니다.
 
 # Function to fetch transactions from database
 def fetch_transactions():
@@ -159,6 +159,7 @@ def handle_inquiry(inquiry):
     return response
 
 # Streamlit UI components
+st.title('Invoice Inquiry System')
 inquiry = st.text_area('Enter your inquiry:')
 if st.button('Submit'):
     response = handle_inquiry(inquiry)
