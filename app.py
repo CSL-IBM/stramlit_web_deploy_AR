@@ -1,16 +1,17 @@
-# app.py
-
 import streamlit as st
 from datetime import datetime
 import pytz
-from langchain.utilities import SQLDatabase
-from langchain_experimental.sql import SQLDatabaseChain
 import sqlite3
 import csv
-
+import torch
+from langchain.utilities import SQLDatabase
+from langchain_experimental.sql import SQLDatabaseChain
+from langchain.embeddings import HuggingFaceInstructEmbeddings
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from ibm_watson_machine_learning.foundation_models import Model
 from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+from ibm_watson_machine_learning.foundation_models.utils.enums import DecodingMethods
 
 # Define LLM class and instantiate llm object
 class LLM:
@@ -78,8 +79,37 @@ def init_db():
 # Initialize database
 init_db()
 
-# Correctly initialize SQLDatabaseChain instance
-db_chain = SQLDatabaseChain(llm_object.llm.llm, db=db, verbose=True)
+# Function to initialize the Watsonx language model and its embeddings
+def init_llm():
+    params = {
+        GenParams.MAX_NEW_TOKENS: 1000,
+        GenParams.MIN_NEW_TOKENS: 1,
+        GenParams.DECODING_METHOD: DecodingMethods.SAMPLE,
+        GenParams.TEMPERATURE: 0,
+        GenParams.TOP_K: 50,
+        GenParams.TOP_P: 1
+    }
+
+    credentials = {
+        'url': "https://us-south.ml.cloud.ibm.com",
+        'apikey': "w3tA2Es6y0R5z5t2EMhI6sxEarmloP3WnrY902iC81uL"
+    }
+
+    model = Model(
+        model_id='meta-llama/llama-2-70b-chat',
+        credentials=credentials,
+        params=params,
+        project_id="16acfdcc-378f-4268-a2f4-ba04ca7eca08"
+    )
+
+    llm_hub = WatsonxLLM(model=model)
+
+    # Initialize embeddings using a pre-trained model to represent the text data.
+    embeddings = HuggingFaceInstructEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2", model_kwargs={"device": "cuda:0" if torch.cuda.is_available() else "cpu"}
+    )
+
+    return llm_hub, embeddings
 
 # Function to fetch transactions from database
 def fetch_transactions():
@@ -89,8 +119,8 @@ def fetch_transactions():
     conn.close()
     return transactions
 
-# Main function to handle inquiry submission
-def handle_inquiry(inquiry):
+# Function to handle inquiry submission
+def handle_inquiry(inquiry, llm_hub, db_chain):
     prompt = f"""
     <<SYS>>
     You are a powerful text-to-SQLite model, and your role is to answer questions about a database. You are given questions and context regarding the Invoice details table, which represents the detailed records of currently open invoices.
@@ -98,11 +128,11 @@ def handle_inquiry(inquiry):
     You must run SQLite queries to the table to find an answer. Ensure your query does not include any non-SQLite syntax such as DATE_TRUNC or any use of backticks (`) or "```sql". Then, execute this query against the 'transactions' table and provide the answer.
 
     Guidelines:
-    - Filter results using the current time zone: {datetime.now(pytz.timezone('America/New_York'))} only when query specifis a specific date/time period. You should use ">=" or "<=" operators to filter the date or use "GROUP BY strftime('%m', date)" for grouping into month.  Assume the date format in the database is 'YYYY-MM-DD'.
+    - Filter results using the current time zone: {datetime.now(pytz.timezone('America/New_York'))} only when query specifies a specific date/time period. You should use ">=" or "<=" operators to filter the date or use "GROUP BY strftime('%m', date)" for grouping into month.  Assume the date format in the database is 'YYYY-MM-DD'.
     - If the query result is [(None,)], run the SQLite query again to double check the answer.
     - If a specific category is mentioned in the inquiry, such as 'Yellow', 'Red', or 'Green', use the "WHERE" condition in your SQL query to filter transactions by that category. For example, when asked for the complete invoice details for 'Green', use "FROM transactions WHERE category = 'Green'".
     - If not asked for a specific category, you shouldn't filter any category out. On the other hand, you should use "where" condition to do the filtering. When asked for the average amount in a category, use the SQLite query (AVG(amount) WHERE category = 'category_name').
-    - When asked for \'highest\' or \'lowest\', use SQL function MAX() or MIN() respectively.
+    - When asked for 'highest' or 'lowest', use SQL function MAX() or MIN() respectively.
     - If a specific condition is provided in the inquiry, such as mentioning a specific Collector like 'John', 'David', 'Lisa', 'Mary', or 'Michael', and specifying a category such as 'Yellow', 'Red', or 'Green', use the "WHERE" clause in your SQL query to filter transactions accordingly. For example, if you need to fetch invoice details for 'John' and 'Green', you would use "FROM transactions WHERE Collector = 'John' AND category = 'Green'".
 
     Use the following format to answer the inquiry:
@@ -129,13 +159,21 @@ def handle_inquiry(inquiry):
 
     return response
 
+# Initialize LLM and embeddings
+llm_hub, embeddings = init_llm()
+
+# Initialize SQLDatabaseChain instance
+db_chain = SQLDatabaseChain(llm_hub, db=db, verbose=True)
+
 # Streamlit UI components
+st.title('Invoice Inquiry System')
+
 inquiry = st.text_area('Enter your inquiry:')
 if st.button('Submit'):
-    response = handle_inquiry(inquiry)
+    response = handle_inquiry(inquiry, llm_hub, db_chain)
     st.markdown(f"**Response:** {response}")
 
 # Display transactions
 transactions = fetch_transactions()
-st.write('Recent Transactions:')
+st.subheader('Recent Transactions:')
 st.write(transactions)
