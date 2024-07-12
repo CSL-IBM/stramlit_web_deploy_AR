@@ -108,7 +108,7 @@ Advice: Provide tips here, such as reminding users of progress for invoices with
 """
 
 # Initialize the Database Chain (unchanged from original)
-db_chain = SQLDatabaseChain(llm, db, verbose=True)
+db_chain = SQLDatabaseChain(llm=llm, db=db, verbose=True)
 
 # Streamlit application (unchanged from original)
 st.title('Transactions Dashboard')
