@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 import pytz
 from db import get_db_connection
-from langchain_experimental.sql import SQLDatabaseChain
+from langchain-experimental.sql import SQLDatabaseChain
 from model import llm
 
 # Initialize Streamlit app
