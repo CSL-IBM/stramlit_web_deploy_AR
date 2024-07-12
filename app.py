@@ -108,7 +108,7 @@ def init_llm():
 
 # Correctly initialize SQLDatabaseChain instance
 llm_hub = init_llm()
-db_chain = SQLDatabaseChain(llm_hub=llm_hub, db=db, verbose=True)
+db_chain = SQLDatabaseChain(llm=llm_hub, database=db, verbose=True)
 
 # Function to fetch transactions from database
 def fetch_transactions():
