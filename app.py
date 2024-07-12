@@ -77,7 +77,7 @@ def init_db():
 init_db()
 
 # Now, let's initialize SQLDatabaseChain instance correctly
-db_chain = SQLDatabaseChain(llm_object.llm, db, verbose=True)
+db_chain = SQLDatabaseChain(llm_object.llm, db=db, verbose=True)
 
 # Function to fetch transactions from database
 def fetch_transactions():
