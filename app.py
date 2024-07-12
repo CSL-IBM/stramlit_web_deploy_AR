@@ -152,11 +152,14 @@ def handle_inquiry(inquiry):
 
     {inquiry}
     """
-    response = db_chain.run(prompt)
+    try:
+        response = db_chain.run(prompt)
+        response = response.replace('\n', '<br>')
+        return response
+    except Exception as e:
+        st.error(f"Error: {e}")
+        return ""
 
-    response = response.replace('\n', '<br>')
-
-    return response
 
 # Streamlit UI components
 st.title('Invoice Inquiry System')
