@@ -1,21 +1,46 @@
-# Streamlit UI components
 import streamlit as st
-import sqlite3
-import csv
 from datetime import datetime
 import pytz
+from langchain.utilities import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
-from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
-from ibm_watson_machine_learning.foundation_models.utils.enums import DecodingMethods
-from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
-from ibm_watson_machine_learning.foundation_models import Model
+import sqlite3
+import csv
 
-# Streamlit UI components
-st.title('Invoice Inquiry System')
-inquiry = st.text_area('Enter your inquiry:')
-if st.button('Submit'):
-    response = handle_inquiry(inquiry)
-    st.markdown(f"**Response:** {response}")
+from ibm_watson_machine_learning.foundation_models import Model
+from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
+from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+from ibm_watson_machine_learning.foundation_models.utils.enums import DecodingMethods
+
+# Define LLM class and instantiate llm object
+class LLM:
+    def __init__(self):
+        my_credentials = {
+            "url": "https://us-south.ml.cloud.ibm.com",
+            "apikey": "hkEEsPjALuKUCakgA4IuR0SfTyVC9uT0qlQpA15Rcy8U"
+        }
+
+        params = {
+            GenParams.MAX_NEW_TOKENS: 1000,
+            GenParams.TEMPERATURE: 0.1,
+            GenParams.DECODING_METHOD: DecodingMethods.SAMPLE,
+            GenParams.TOP_K: 50,
+            GenParams.TOP_P: 1
+        }
+
+        LLAMA2_model = Model(
+            model_id='meta-llama/llama-2-70b-chat',
+            credentials=my_credentials,
+            params=params,
+            project_id="16acfdcc-378f-4268-a2f4-ba04ca7eca08",
+        )
+
+        self.llm = WatsonxLLM(LLAMA2_model)
+
+# Initialize LLM object
+llm_object = LLM()
+
+# Initialize SQLDatabase instance
+db = SQLDatabase.from_uri("sqlite:///history.db")
 
 # Function to connect to SQLite database
 def get_db_connection():
@@ -23,10 +48,72 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Initialize database and populate with initial data
+def init_db():
+    conn = get_db_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Category TEXT,
+            CustomerName TEXT,
+            CustomerNumber TEXT,
+            InvoiceNumber TEXT,
+            InvoiceAmount INTEGER,
+            InvoiceDate DATE,
+            DueDate DATE,
+            ForecastCode TEXT,
+            ForecastDate DATE,
+            Collector TEXT
+        );
+    """)
+
+    if conn.execute('SELECT COUNT(*) FROM transactions').fetchone()[0] == 0:
+        with open('transactions.csv', 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip the header row
+            sample_data = list(reader)
+            conn.executemany('INSERT INTO transactions (Category, CustomerName, CustomerNumber, InvoiceNumber, InvoiceAmount, InvoiceDate, DueDate, ForecastCode, ForecastDate, Collector) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', sample_data)
+
+    conn.commit()
+    conn.close()
+
+# Initialize database
+init_db()
+
+# Initialize LLM and embeddings
+def init_llm():
+    params = {
+        GenParams.MAX_NEW_TOKENS: 1000,
+        GenParams.MIN_NEW_TOKENS: 1,
+        GenParams.DECODING_METHOD: DecodingMethods.SAMPLE,
+        GenParams.TEMPERATURE: 0,
+        GenParams.TOP_K: 50,
+        GenParams.TOP_P: 1
+    }
+
+    credentials = {
+        'url': "https://us-south.ml.cloud.ibm.com",
+        'apikey' : "w3tA2Es6y0R5z5t2EMhI6sxEarmloP3WnrY902iC81uL"
+    }
+
+    model = Model(
+        model_id= 'meta-llama/llama-2-70b-chat',
+        credentials=credentials,
+        params=params,
+        project_id="16acfdcc-378f-4268-a2f4-ba04ca7eca08"
+    )
+
+    llm_hub = WatsonxLLM(model=model)
+    return llm_hub
+
+# Correctly initialize SQLDatabaseChain instance
+llm_hub = init_llm()
+db_chain = SQLDatabaseChain(llm=llm_hub, database=db, verbose=True)
+
 # Function to fetch transactions from database
 def fetch_transactions():
     conn = get_db_connection()
-    cursor = conn.execute('SELECT * FROM transactions ORDER BY InvoiceDate DESC')
+    cursor = conn.execute('SELECT id, * FROM transactions ORDER BY InvoiceDate DESC')
     transactions = [dict(ix) for ix in cursor.fetchall()]
     conn.close()
     return transactions
@@ -65,36 +152,20 @@ def handle_inquiry(inquiry):
 
     {inquiry}
     """
-    db = get_db_connection()
-    response = db.execute(prompt).fetchall()
-    db.close()
+    response = db_chain.run(prompt)
 
-    response_text = ""
-    for row in response:
-        response_text += f"Response: {row}\n<br>\nExplanation: Nerd need for even all so do use all now. The answer may continue. View the application for a successful success."
-    return response_text
+    response = response.replace('\n', '<br>')
 
-# Streamlit UI components and logic
-def main():
-    st.title('Invoice Inquiry System')
+    return response
 
-    # Initialize database
-    init_db()
+# Streamlit UI components
+st.title('Invoice Inquiry System')
+inquiry = st.text_area('Enter your inquiry:')
+if st.button('Submit'):
+    response = handle_inquiry(inquiry)
+    st.markdown(f"**Response:** {response}")
 
-    # Initialize LLM and SQLDatabaseChain
-    llm_hub = init_llm()
-    db = SQLDatabaseChain(llm=llm_hub, database=get_db_connection(), verbose=True)
-
-    # Display inquiry form and handle submission
-    inquiry = st.text_area('Enter your inquiry:')
-    if st.button('Submit'):
-        response = handle_inquiry(inquiry)
-        st.markdown(f"**Response:** {response}")
-
-    # Display recent transactions
-    transactions = fetch_transactions()
-    st.write('Recent Transactions:')
-    st.write(transactions)
-
-if __name__ == '__main__':
-    main()
+# Display transactions
+transactions = fetch_transactions()
+st.write('Recent Transactions:')
+st.write(transactions)
