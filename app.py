@@ -5,7 +5,7 @@ import pytz
 from ibm_watson_machine_learning.foundation_models import Model
 from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
-from langchain_experimental.sql import SQLDatabaseChain
+from langchain_experimental import SQLDatabaseChain
 
 # WatsonxLLM Model Configuration
 my_credentials = {
