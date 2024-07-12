@@ -1,18 +1,17 @@
 import streamlit as st
-import sqlite3
-import csv
 from datetime import datetime
 import pytz
 from langchain.utilities import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
+import sqlite3
+import csv
+
 from ibm_watson_machine_learning.foundation_models import Model
 from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 from ibm_watson_machine_learning.foundation_models.utils.enums import DecodingMethods
-import streamlit.components.v1 as components
-from jinja2 import Environment, FileSystemLoader
 
-# Initialize LLM class and instantiate llm object
+# Define LLM class and instantiate llm object
 class LLM:
     def __init__(self):
         my_credentials = {
@@ -109,19 +108,15 @@ def init_llm():
 
 # Correctly initialize SQLDatabaseChain instance
 llm_hub = init_llm()
-db_chain = SQLDatabaseChain.from_llm(llm=llm_hub, database=db, verbose=True)
+db_chain = SQLDatabaseChain(llm=llm_hub, database=db, verbose=True)
 
 # Function to fetch transactions from database
 def fetch_transactions():
     conn = get_db_connection()
-    cursor = conn.execute('SELECT * FROM transactions ORDER BY InvoiceDate DESC')
+    cursor = conn.execute('SELECT id, * FROM transactions ORDER BY InvoiceDate DESC')
     transactions = [dict(ix) for ix in cursor.fetchall()]
     conn.close()
     return transactions
-
-# Jinja2 environment setup
-env = Environment(loader=FileSystemLoader('.'))
-template = env.get_template('index.html')
 
 # Main function to handle inquiry submission
 def handle_inquiry(inquiry):
@@ -163,18 +158,14 @@ def handle_inquiry(inquiry):
 
     return response
 
-# Main function
-def main():
-    st.title('Invoice Inquiry System')
+# Streamlit UI components
+st.title('Invoice Inquiry System')
+inquiry = st.text_area('Enter your inquiry:')
+if st.button('Submit'):
+    response = handle_inquiry(inquiry)
+    st.markdown(f"**Response:** {response}")
 
-    inquiry = st.text_area('Enter your inquiry:')
-    if st.button('Submit'):
-        response = handle_inquiry(inquiry)
-        transactions = fetch_transactions()
-
-        # Render the response and transactions using HTML template
-        html_content = template.render(inquiry=inquiry, answer=response, transactions=transactions)
-        components.html(html_content, height=800, scrolling=True)
-
-if __name__ == '__main__':
-    main()
+# Display transactions
+transactions = fetch_transactions()
+st.write('Recent Transactions:')
+st.write(transactions)
