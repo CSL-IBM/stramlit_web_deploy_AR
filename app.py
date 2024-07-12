@@ -34,7 +34,7 @@ class LLM:
             project_id="16acfdcc-378f-4268-a2f4-ba04ca7eca08",
         )
 
-        self.llm = WatsonxLLM(model=LLAMA2_model)
+        self.llm = WatsonxLLM(LLAMA2_model)
 
 # Initialize LLM object
 llm_object = LLM()
@@ -108,7 +108,7 @@ def init_llm():
 
 # Correctly initialize SQLDatabaseChain instance
 llm_hub = init_llm()
-db_chain = SQLDatabaseChain(llm_hub=llm_hub.llm, db=db, verbose=True)
+db_chain = SQLDatabaseChain(llm_hub=llm_hub, db=db, verbose=True)
 
 # Function to fetch transactions from database
 def fetch_transactions():
