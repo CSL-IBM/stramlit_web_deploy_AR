@@ -9,6 +9,25 @@ from ibm_watson_machine_learning.foundation_models.utils.enums import DecodingMe
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 from ibm_watson_machine_learning.foundation_models import Model
 
+# Streamlit UI components
+st.title('Invoice Inquiry System')
+inquiry = st.text_area('Enter your inquiry:')
+if st.button('Submit'):
+    response = handle_inquiry(inquiry)
+    st.markdown(f"**Response:** {response}")
+
+# Display transactions
+transactions = fetch_transactions()
+st.write('Recent Transactions:')
+st.write(transactions)
+
+# Load your custom HTML template
+with open('templates/index.html', 'r') as file:
+    template = file.read()
+
+# Render the HTML template
+st.components.v1.html(template)
+
 # Define QUERY template
 QUERY = """
 <<SYS>> 
