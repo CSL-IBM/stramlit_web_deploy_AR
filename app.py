@@ -2,8 +2,29 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 import pytz
-from langchain_experimental.sql import SQLDatabaseChain
-from streamlit_web_deploy_AR.model import llm
+from ibm_watson_machine_learning.foundation_models import Model
+from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
+from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+
+# WatsonxLLM Model Configuration
+my_credentials = {
+    "url": "https://us-south.ml.cloud.ibm.com",
+    "apikey": "hkEEsPjALuKUCakgA4IuR0SfTyVC9uT0qlQpA15Rcy8U"  # Replace with your actual API key
+}
+
+params = {
+    GenParams.MAX_NEW_TOKENS: 1000,  # The maximum number of tokens that the model can generate in a single run.
+    GenParams.TEMPERATURE: 0.1,  # A parameter that controls the randomness of the token generation.
+}
+
+LLAMA2_model = Model(
+    model_id='meta-llama/llama-2-70b-chat',
+    credentials=my_credentials,
+    params=params,
+    project_id="16acfdcc-378f-4268-a2f4-ba04ca7eca08"  # Replace with your actual project ID
+)
+
+llm = WatsonxLLM(LLAMA2_model)
 
 # Function to get database connection
 def get_db_connection():
@@ -80,4 +101,3 @@ if st.button('Submit'):
     )
     result = db_chain.run(response)
     st.write(result)
-
