@@ -149,9 +149,11 @@ def handle_inquiry(inquiry):
     Advice: Provide tips here, such as reminding users of progress for invoices with a due date within 10 days by comparing the due date with today.
 
     <</SYS>>
-
-    {inquiry}
     """
+    
+    # Concatenate inquiry to the prompt
+    prompt += inquiry
+    
     try:
         response = db_chain.run(prompt)
         response = response.replace('\n', '<br>')
@@ -159,7 +161,6 @@ def handle_inquiry(inquiry):
     except Exception as e:
         st.error(f"Error: {e}")
         return ""
-
 
 # Streamlit UI components
 st.title('Invoice Inquiry System')
