@@ -12,9 +12,6 @@ from ibm_watson_machine_learning.foundation_models import Model
 from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 
-# Initialize Streamlit app
-st.title('Transactions Dashboard')
-
 # Define LLM class and instantiate llm object
 class LLM:
     def __init__(self):
@@ -38,7 +35,6 @@ class LLM:
         self.llm = WatsonxLLM(LLAMA2_model)
 
 llm_object = LLM()
-llm = llm_object.llm
 
 # Initialize SQLDatabase instance
 db = SQLDatabase.from_uri("sqlite:///history.db")
@@ -80,7 +76,7 @@ def init_db():
 
 init_db()
 
-# Initialize SQLDatabaseChain instance
+# Now, let's initialize SQLDatabaseChain instance correctly
 db_chain = SQLDatabaseChain(llm_object.llm, db, verbose=True)
 
 # Function to fetch transactions from database
