@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 import pytz
-from db import get_db_connection
+from db import db, get_db_connection, get_table_columns, init_db
 from langchain_experimental.sql import SQLDatabaseChain
 from model import llm
 
