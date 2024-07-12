@@ -51,7 +51,7 @@ jsonpatch==1.33
 jsonpointer==2.4
 kubernetes==28.1.0
 langchain==0.0.340
-langchain-experimental==0.0.42
+langchain_experimental==0.0.42
 langsmith==0.0.66
 lomond==0.3.3
 MarkupSafe==2.1.3
