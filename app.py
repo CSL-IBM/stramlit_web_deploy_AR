@@ -72,6 +72,7 @@ Advice: Provide tips here, such as reminding users of progress for invoices with
 # Initialize the Database Chain
 db = get_db_connection()
 db_chain = SQLDatabaseChain(llm, db, verbose=True)
+print("SQLDatabaseChain initialized successfully.")
 
 # Streamlit application
 st.title('Transactions Dashboard')
