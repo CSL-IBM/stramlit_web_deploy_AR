@@ -34,6 +34,7 @@ class LLM:
 
         self.llm = WatsonxLLM(LLAMA2_model)
 
+# Instantiate LLM object
 llm_object = LLM()
 
 # Initialize SQLDatabase instance
@@ -74,10 +75,11 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Initialize database
 init_db()
 
-# Now, let's initialize SQLDatabaseChain instance correctly
-db_chain = SQLDatabaseChain(llm_object.llm, db=db, verbose=True)
+# Correctly initialize SQLDatabaseChain instance
+db_chain = SQLDatabaseChain(llm_object.llm.llm, db=db, verbose=True)
 
 # Function to fetch transactions from database
 def fetch_transactions():
