@@ -1,16 +1,17 @@
+# app.py
+
 import streamlit as st
 from datetime import datetime
 import pytz
 from db import db, get_db_connection, get_table_columns, init_db
 from langchain_experimental.sql import SQLDatabaseChain
-from model import llm
+from model import llm  # llm 객체를 가져옵니다
 
 # Initialize Streamlit app
 st.title('Transactions Dashboard')
 
 # Initialize SQLDatabaseChain instance
 db_chain = SQLDatabaseChain(llm, db, verbose=True)
-
 
 # Function to fetch transactions from database
 def fetch_transactions():
