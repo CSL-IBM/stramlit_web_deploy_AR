@@ -45,6 +45,7 @@ db = SQLDatabase.from_uri("sqlite:///history.db")
 # Initialize database and populate with initial data
 def init_db():
     conn = sqlite3.connect('history.db', check_same_thread=False)
+    conn.row_factory = sqlite3.Row  # Use Row factory
     conn.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +76,7 @@ def init_db():
 init_db()
 
 # Create the database chain
-db_chain = SQLDatabaseChain(llm=llm_object.llm, database=db, verbose=True)
+db_chain = SQLDatabaseChain.from_llm(llm=llm_object.llm, db=db, verbose=True)
 
 # Define the template query
 QUERY = """
@@ -125,6 +126,7 @@ def main():
 
     # Fetch transactions from the database
     conn = sqlite3.connect('history.db', check_same_thread=False)
+    conn.row_factory = sqlite3.Row  # Use Row factory
     cursor = conn.execute('SELECT * FROM transactions ORDER BY InvoiceDate DESC')
     transactions = [dict(ix) for ix in cursor.fetchall()]
     conn.close()
