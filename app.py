@@ -9,7 +9,8 @@ from model import llm
 st.title('Transactions Dashboard')
 
 # Initialize SQLDatabaseChain instance
-db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
+db_chain = SQLDatabaseChain(llm, db, verbose=True)
+
 
 # Function to fetch transactions from database
 def fetch_transactions():
